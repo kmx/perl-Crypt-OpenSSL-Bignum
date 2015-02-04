@@ -14,11 +14,6 @@ $VERSION = '0.05';
 
 bootstrap Crypt::OpenSSL::Bignum $VERSION;
 
-sub DESTROY
-{
-    shift->_free_BN();
-}
-
 sub bless_pointer
 {
     my( $proto, $p_pointer ) = @_;

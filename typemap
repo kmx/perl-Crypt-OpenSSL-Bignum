@@ -1,12 +1,3 @@
 TYPEMAP
-BIGNUM*         O_OBJECT
-BN_CTX*         O_OBJECT
-
-INPUT
-O_OBJECT
-    if( ! SvROK( $arg ) ) { croak( \"argument is not a ${type} object\" ); }
-    $var = INT2PTR(${type}, SvIV((SV*)SvRV( $arg )));
-
-OUTPUT
-O_OBJECT
-   sv_setsv( $arg, new_obj( p_proto, $var ) );
+Crypt::OpenSSL::Bignum          T_PTROBJ
+Crypt::OpenSSL::Bignum::CTX     T_PTROBJ

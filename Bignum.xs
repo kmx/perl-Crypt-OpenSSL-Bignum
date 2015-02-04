@@ -8,23 +8,24 @@
 #define checkOpenSslCall( result ) if( ! ( result ) ) \
   croak( "OpenSSL error: %s", ERR_reason_error_string( ERR_get_error() ) );
 
+typedef BIGNUM *Crypt__OpenSSL__Bignum;
+typedef BN_CTX *Crypt__OpenSSL__Bignum__CTX;
+
 SV* new_obj( SV * p_proto, void* obj )
 {
-    return sv_2mortal( sv_bless( newRV_noinc( newSViv( PTR2IV(obj) ) ),
-                                 ( SvROK( p_proto )
-                                   ? SvSTASH( SvRV( p_proto ) )
-                                   : gv_stashsv( p_proto, 1 ) ) ) );
+    SV * tmp = sv_newmortal();
+    sv_setref_pv(tmp, "Crypt::OpenSSL::Bignum", (void*)obj);
+    return tmp;
 }
 
 #define proto_obj( obj ) new_obj( ST(0), obj )
 
 BIGNUM* sv2bn( SV* sv )
 {
-    if( ! SvROK( sv ) )
-    {
-      croak( "argument is not a Crypt::OpenSSL::Bignum object" );
+    if (SvROK(sv) && sv_derived_from(sv, "Crypt::OpenSSL::Bignum")) {
+        return INT2PTR(Crypt__OpenSSL__Bignum, SvIV((SV*)SvRV(sv)));
     }
-    return INT2PTR(BIGNUM *, SvIV(SvRV(sv)));
+    else Perl_croak(aTHX_ "argument is not a Crypt::OpenSSL::Bignum object");
 }
 
 MODULE = Crypt::OpenSSL::Bignum      PACKAGE = Crypt::OpenSSL::Bignum   PREFIX=BN_
@@ -33,14 +34,12 @@ BOOT:
     ERR_load_crypto_strings();
 
 void
-_free_BN(self)
-    BIGNUM* self;
-  CODE:
-    BN_clear_free( self );
+DESTROY(Crypt::OpenSSL::Bignum self)
+    CODE:
+        BN_clear_free( self );
 
-BIGNUM*
-new_from_word(p_proto, p_word)
-    SV* p_proto;
+Crypt::OpenSSL::Bignum
+new_from_word(CLASS, p_word)
     unsigned long p_word;
   PREINIT:
     BIGNUM* bn;
@@ -51,9 +50,8 @@ new_from_word(p_proto, p_word)
   OUTPUT:
     RETVAL
 
-BIGNUM*
-new_from_decimal(p_proto, p_dec_string)
-    SV* p_proto;
+Crypt::OpenSSL::Bignum
+new_from_decimal(CLASS, p_dec_string)
     char* p_dec_string;
   PREINIT:
     BIGNUM* bn;
@@ -64,9 +62,8 @@ new_from_decimal(p_proto, p_dec_string)
   OUTPUT:
     RETVAL
 
-BIGNUM*
-new_from_hex(p_proto, p_hex_string)
-    SV* p_proto;
+Crypt::OpenSSL::Bignum
+new_from_hex(CLASS, p_hex_string)
     char* p_hex_string;
   PREINIT:
     BIGNUM* bn;
@@ -77,9 +74,8 @@ new_from_hex(p_proto, p_hex_string)
   OUTPUT:
     RETVAL
 
-BIGNUM*
-new_from_bin(p_proto, p_bin_string_SV)
-    SV* p_proto;
+Crypt::OpenSSL::Bignum
+new_from_bin(CLASS, p_bin_string_SV)
     SV* p_bin_string_SV;
   PREINIT:
     BIGNUM* bn;
@@ -92,9 +88,8 @@ new_from_bin(p_proto, p_bin_string_SV)
   OUTPUT:
     RETVAL
 
-BIGNUM*
-zero(p_proto)
-    SV* p_proto;
+Crypt::OpenSSL::Bignum
+zero(CLASS)
   PREINIT:
     BIGNUM *bn;
   CODE:
@@ -104,9 +99,8 @@ zero(p_proto)
   OUTPUT:
     RETVAL
 
-BIGNUM*
-one(p_proto)
-    SV* p_proto;
+Crypt::OpenSSL::Bignum
+one(CLASS)
   PREINIT:
     BIGNUM *bn;
   CODE:
@@ -116,11 +110,8 @@ one(p_proto)
   OUTPUT:
     RETVAL
 
-
-
 char*
-to_decimal(self)
-    BIGNUM* self;
+to_decimal(Crypt::OpenSSL::Bignum self)
   CODE:
     checkOpenSslCall( RETVAL = BN_bn2dec( self ) );
   OUTPUT:
@@ -128,10 +119,8 @@ to_decimal(self)
   CLEANUP:
     OPENSSL_free( RETVAL );
 
-
 char*
-to_hex(self)
-    BIGNUM* self;
+to_hex(Crypt::OpenSSL::Bignum self)
   CODE:
     checkOpenSslCall( RETVAL = BN_bn2hex( self ) );
   OUTPUT:
@@ -140,30 +129,32 @@ to_hex(self)
     OPENSSL_free( RETVAL );
 
 SV*
-to_bin(self)
-    BIGNUM* self;
+to_bin(Crypt::OpenSSL::Bignum self)
   PREINIT:
-    char* bin;
+    unsigned char* bin;
     int length;
   CODE:
     length = BN_num_bytes( self );
-    New( 0, bin, length, char );
-    BN_bn2bin( self, bin );
-    RETVAL = newSVpv( bin, length );
-    Safefree( bin );
+    if (length>0) {
+      RETVAL = NEWSV(0, length);
+      SvPOK_only(RETVAL);
+      SvCUR_set(RETVAL, length);
+      bin = (unsigned char *)SvPV_nolen(RETVAL);
+      BN_bn2bin( self, bin );
+    }
+    else {
+      RETVAL = newSVpvn("", 0);
+    }
   OUTPUT:
     RETVAL
 
 unsigned long
-BN_get_word(self)
-    BIGNUM* self;
-
-PROTOTYPES: DISABLE
+BN_get_word(Crypt::OpenSSL::Bignum self)
 
 SV*
 add(a, b, ...)
-    BIGNUM* a;
-    BIGNUM* b;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum b;
   PREINIT:
     BIGNUM *bn;
   PPCODE:
@@ -176,8 +167,8 @@ add(a, b, ...)
 
 SV*
 sub(a, b, ...)
-    BIGNUM* a;
-    BIGNUM* b;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum b;
   PREINIT:
     BIGNUM *bn;
   PPCODE:
@@ -190,9 +181,9 @@ sub(a, b, ...)
 
 SV*
 mul(a, b, ctx, ...)
-    BIGNUM* a;
-    BIGNUM* b;
-    BN_CTX* ctx;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum b;
+    Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
   PPCODE:
@@ -205,9 +196,9 @@ mul(a, b, ctx, ...)
 
 SV*
 div(a, b, ctx, ...)
-    BIGNUM* a;
-    BIGNUM* b;
-    BN_CTX* ctx;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum b;
+    Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* quotient;
     BIGNUM* remainder;
@@ -221,10 +212,10 @@ div(a, b, ctx, ...)
     ST(1) = ( (items < 5 ) ? proto_obj( remainder ) : ST(4) );
     XSRETURN(2);
 
-BIGNUM*
+Crypt::OpenSSL::Bignum
 sqr(a, ctx)
-    BIGNUM* a;
-    BN_CTX* ctx;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
     SV* p_proto;
@@ -238,9 +229,9 @@ sqr(a, ctx)
 
 SV*
 mod(a, b, ctx, ...)
-    BIGNUM* a;
-    BIGNUM* b;
-    BN_CTX* ctx;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum b;
+    Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
   PPCODE:
@@ -251,12 +242,12 @@ mod(a, b, ctx, ...)
     ST(0) = ( (items < 4 ) ? proto_obj( bn ) : ST(3) );
     XSRETURN(1);
 
-BIGNUM*
+Crypt::OpenSSL::Bignum
 mod_mul(a, b, m, ctx)
-    BIGNUM* a;
-    BIGNUM* b;
-    BIGNUM* m;
-    BN_CTX* ctx;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum b;
+    Crypt::OpenSSL::Bignum m;
+    Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
     SV* p_proto;
@@ -268,11 +259,11 @@ mod_mul(a, b, m, ctx)
   OUTPUT:
     RETVAL
 
-BIGNUM*
+Crypt::OpenSSL::Bignum
 exp(a, p, ctx)
-    BIGNUM* a;
-    BIGNUM* p;
-    BN_CTX* ctx;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum p;
+    Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
     SV* p_proto;
@@ -284,12 +275,12 @@ exp(a, p, ctx)
   OUTPUT:
     RETVAL
 
-BIGNUM*
+Crypt::OpenSSL::Bignum
 mod_exp(a, p, m, ctx)
-    BIGNUM* a;
-    BIGNUM* p;
-    BIGNUM* m;
-    BN_CTX* ctx;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum p;
+    Crypt::OpenSSL::Bignum m;
+    Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
     SV* p_proto;
@@ -301,11 +292,11 @@ mod_exp(a, p, m, ctx)
   OUTPUT:
     RETVAL
 
-BIGNUM*
+Crypt::OpenSSL::Bignum
 mod_inverse(a, n, ctx)
-    BIGNUM* a;
-    BIGNUM* n;
-    BN_CTX* ctx;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum n;
+    Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
     SV* p_proto;
@@ -317,11 +308,11 @@ mod_inverse(a, n, ctx)
   OUTPUT:
     RETVAL
 
-BIGNUM*
+Crypt::OpenSSL::Bignum
 gcd(a, b, ctx)
-    BIGNUM* a;
-    BIGNUM* b;
-    BN_CTX* ctx;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum b;
+    Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
     SV* p_proto;
@@ -335,24 +326,24 @@ gcd(a, b, ctx)
 
 int
 BN_cmp(a, b)
-    BIGNUM* a;
-    BIGNUM* b;
+    Crypt::OpenSSL::Bignum a;
+    Crypt::OpenSSL::Bignum b;
 
 int
 BN_is_zero(a)
-    BIGNUM* a;
+    Crypt::OpenSSL::Bignum a;
 
 int
 BN_is_one(a)
-    BIGNUM* a;
+    Crypt::OpenSSL::Bignum a;
 
 int
 BN_is_odd(a)
-    BIGNUM* a;
+    Crypt::OpenSSL::Bignum a;
 
-BIGNUM*
+Crypt::OpenSSL::Bignum
 copy(a)
-    BIGNUM* a;
+    Crypt::OpenSSL::Bignum a;
   PREINIT:
     SV* p_proto;
   CODE:
@@ -363,22 +354,23 @@ copy(a)
 
 IV
 pointer_copy(a)
-    BIGNUM* a;
+    Crypt::OpenSSL::Bignum a;
   PREINIT:
   CODE:
     checkOpenSslCall( RETVAL = PTR2IV(BN_dup(a)) );
   OUTPUT:
     RETVAL
 
-MODULE = Crypt::OpenSSL::Bignum  PACKAGE = Crypt::OpenSSL::Bignum::CTX PREFIX=BN_CTX_
+MODULE = Crypt::OpenSSL::Bignum  PACKAGE = Crypt::OpenSSL::Bignum::CTX
 
-BN_CTX*
-BN_CTX_new(p_proto)
-    SV* p_proto;
-  C_ARGS:
+Crypt::OpenSSL::Bignum::CTX
+new(CLASS)
+    CODE:
+        RETVAL = BN_CTX_new();
+    OUTPUT:
+        RETVAL
 
 void
-_free_BN_CTX(self)
-    BN_CTX* self;
-  CODE:
-    BN_CTX_free( self );
+DESTROY(Crypt::OpenSSL::Bignum::CTX self)
+    CODE:
+        BN_CTX_free(self);

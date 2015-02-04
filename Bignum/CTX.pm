@@ -13,11 +13,6 @@ require DynaLoader;
 
 bootstrap Crypt::OpenSSL::Bignum $Crypt::OpenSSL::Bignum::VERSION;
 
-sub DESTROY
-{
-    shift->_free_BN_CTX();
-}
-
 1;
 __END__
 # Below is stub documentation for your module. You better edit it!
