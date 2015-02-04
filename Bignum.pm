@@ -47,7 +47,7 @@ Crypt::OpenSSL::Bignum - OpenSSL's multiprecision integer arithmetic
   # or
   my $bn = Crypt::OpenSSL::Bignum->new_from_word( 1000 );
   # or
-  my $bn = Crypt::OpenSSL::Bignum->new_from_hex("0x3e8");
+  my $bn = Crypt::OpenSSL::Bignum->new_from_hex("3e8"); # no leading 0x
   # or
   my $bn = Crypt::OpenSSL::Bignum->new_from_bin(pack( "C*", 3, 232 ))
 
@@ -84,7 +84,7 @@ Error.pm's try/catch mechanism to capture errors.
 =item new_from_word
 
 Create a new Crypt::OpenSSL::Bignum object whose value will be the
-word given.  Note that numbers represneted by objects created using
+word given.  Note that numbers represented by objects created using
 this method are necessarily between 0 and 2^32 - 1.
 
 =item new_from_decimal
@@ -204,13 +204,13 @@ fourth argument is set to the remainder.
 
 =item exp
 
-This method returns the product of this object exponeniated by the
+This method returns the product of this object exponentiated by the
 first argument, using the second argument, a
 Crypt::OpenSSL::Bignum::CTX object, as a scratchpad.
 
 =item mod_exp
 
-This method returns the product of this object exponeniated by the
+This method returns the product of this object exponentiated by the
 first argument, modulo the second argument, using the third argument, a
 Crypt::OpenSSL::Bignum::CTX object, as a scratchpad.
 
@@ -223,7 +223,7 @@ routines in the OpenSSL library.  It returns a perl scalar whose IV
 can be cast to a BIGNUM* value.  This can then be passed to an XSUB
 which can work with the BIGNUM directly.  Note that the BIGNUM object
 pointed to will be a copy of the BIGNUM object wrapped by the
-instance; it is thus the responsiblity of the client to free space
+instance; it is thus the responsibility of the client to free space
 allocated by this BIGNUM object if and when it is done with it. See
 also bless_pointer.
 
