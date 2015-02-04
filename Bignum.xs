@@ -406,7 +406,7 @@ BN_ucmp(Crypt::OpenSSL::Bignum self, Crypt::OpenSSL::Bignum b)
 
 void
 BN_swap(Crypt::OpenSSL::Bignum self, Crypt::OpenSSL::Bignum b)
-    
+
 Crypt::OpenSSL::Bignum
 BN_copy(Crypt::OpenSSL::Bignum self)
   CODE:

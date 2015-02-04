@@ -282,7 +282,7 @@ This method returns the square (C<$self ** 2>) of Crypt::OpenSSL::Bignum object.
 
 =item exp
 
- my $new_bn_object = $self->exp($bn_exp, $ctx); 
+ my $new_bn_object = $self->exp($bn_exp, $ctx);
  # new object is created $self is not modified
 
 This method returns the product of this object exponentiated by the
@@ -295,7 +295,7 @@ Crypt::OpenSSL::Bignum::CTX object, as a scratchpad.
  # new object is created $self is not modified
 
 This method returns the product of this object exponentiated by the
-first argument (Crypt::OpenSSL::Bignum object), modulo the second 
+first argument (Crypt::OpenSSL::Bignum object), modulo the second
 argument (also Crypt::OpenSSL::Bignum object), using the third argument,
 a Crypt::OpenSSL::Bignum::CTX object, as a scratchpad.
 
@@ -384,7 +384,7 @@ Shifts a left by C$n> (integer) bits and places the result into a newly created 
 
  my $bn_a = Crypt::OpenSSL::Bignum->new_from_decimal("1234567890001);
  my $bn_b = Crypt::OpenSSL::Bignum->new_from_decimal("1234567890002);
- 
+
  $bn_a->swap($bn_b);
  # or
  $bn_b->swap($bn_a);

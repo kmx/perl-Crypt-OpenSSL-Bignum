@@ -17,5 +17,5 @@ WriteMakefile(
         repository => 'https://github.com/kmx/perl-Crypt-OpenSSL-Bignum',
       },
     },
-    dist => { TARFLAGS => '--owner=0 --group=0 -cvf' }, 
+    dist => { TARFLAGS => '--owner=0 --group=0 -cvf' },
 );
