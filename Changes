@@ -1,5 +1,12 @@
 Revision history for Perl extension Crypt::OpenSSL::Bignum.
 
+0.05_01 2015/05/04
+        - fix for #77911 Patch to add more functions
+        - new constructors: new, rand, pseudo_rand, rand_range
+        - new methods: ucmp, num_bits, num_bytes, rshift, lshift, swap
+        - improved pod documentation (added missing functions)
+        - XS code cleanup
+
 0.05    2015/05/04
         - fix for #84369 Win32 compatibility patch
         - fix for #100993 Memory not reclaimed when CTX object goes out of scope

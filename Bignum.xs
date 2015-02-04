@@ -2,7 +2,7 @@
 #include "perl.h"
 #include "XSUB.h"
 
-#include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <openssl/bn.h>
 
 #define checkOpenSslCall( result ) if( ! ( result ) ) \
@@ -11,14 +11,12 @@
 typedef BIGNUM *Crypt__OpenSSL__Bignum;
 typedef BN_CTX *Crypt__OpenSSL__Bignum__CTX;
 
-SV* new_obj( SV * p_proto, void* obj )
+SV* new_obj( void* obj )
 {
     SV * tmp = sv_newmortal();
     sv_setref_pv(tmp, "Crypt::OpenSSL::Bignum", (void*)obj);
     return tmp;
 }
-
-#define proto_obj( obj ) new_obj( ST(0), obj )
 
 BIGNUM* sv2bn( SV* sv )
 {
@@ -28,7 +26,7 @@ BIGNUM* sv2bn( SV* sv )
     else Perl_croak(aTHX_ "argument is not a Crypt::OpenSSL::Bignum object");
 }
 
-MODULE = Crypt::OpenSSL::Bignum      PACKAGE = Crypt::OpenSSL::Bignum   PREFIX=BN_
+MODULE = Crypt::OpenSSL::Bignum      PACKAGE = Crypt::OpenSSL::Bignum   PREFIX = BN_
 
 BOOT:
     ERR_load_crypto_strings();
@@ -79,17 +77,28 @@ new_from_bin(CLASS, p_bin_string_SV)
     SV* p_bin_string_SV;
   PREINIT:
     BIGNUM* bn;
-    char* bin;
+    unsigned char* bin;
     STRLEN bin_length;
   CODE:
-    bin = SvPV( p_bin_string_SV, bin_length );
+    bin = (unsigned char*) SvPV( p_bin_string_SV, bin_length );
     checkOpenSslCall( bn = BN_bin2bn( bin, bin_length, NULL ) );
     RETVAL = bn;
   OUTPUT:
     RETVAL
 
 Crypt::OpenSSL::Bignum
-zero(CLASS)
+BN_new(CLASS)
+  PREINIT:
+    BIGNUM* bn;
+  CODE:
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_zero( bn ) );
+    RETVAL = bn;
+  OUTPUT:
+    RETVAL
+
+Crypt::OpenSSL::Bignum
+BN_zero(CLASS)
   PREINIT:
     BIGNUM *bn;
   CODE:
@@ -100,7 +109,7 @@ zero(CLASS)
     RETVAL
 
 Crypt::OpenSSL::Bignum
-one(CLASS)
+BN_one(CLASS)
   PREINIT:
     BIGNUM *bn;
   CODE:
@@ -110,8 +119,47 @@ one(CLASS)
   OUTPUT:
     RETVAL
 
+Crypt::OpenSSL::Bignum
+BN_rand(CLASS, int bits, int top, int bottom)
+  PREINIT:
+    BIGNUM* bn;
+  CODE:
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_rand( bn, bits, top, bottom) );
+    RETVAL = bn;
+  OUTPUT:
+    RETVAL
+
+Crypt::OpenSSL::Bignum
+BN_pseudo_rand(CLASS, int bits, int top, int bottom)
+  PREINIT:
+    BIGNUM* bn;
+  CODE:
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_pseudo_rand( bn, bits, top, bottom) );
+    RETVAL = bn;
+  OUTPUT:
+    RETVAL
+
+Crypt::OpenSSL::Bignum
+BN_rand_range(CLASS, Crypt::OpenSSL::Bignum r)
+  PREINIT:
+    BIGNUM* bn;
+  CODE:
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_rand_range( bn, r) );
+    RETVAL = bn;
+  OUTPUT:
+    RETVAL
+
+void
+BN_bless_pointer(CLASS, void *pointer)
+  PPCODE:
+    ST(0) = new_obj(pointer);
+    XSRETURN(1);
+
 char*
-to_decimal(Crypt::OpenSSL::Bignum self)
+BN_to_decimal(Crypt::OpenSSL::Bignum self)
   CODE:
     checkOpenSslCall( RETVAL = BN_bn2dec( self ) );
   OUTPUT:
@@ -120,7 +168,7 @@ to_decimal(Crypt::OpenSSL::Bignum self)
     OPENSSL_free( RETVAL );
 
 char*
-to_hex(Crypt::OpenSSL::Bignum self)
+BN_to_hex(Crypt::OpenSSL::Bignum self)
   CODE:
     checkOpenSslCall( RETVAL = BN_bn2hex( self ) );
   OUTPUT:
@@ -129,7 +177,7 @@ to_hex(Crypt::OpenSSL::Bignum self)
     OPENSSL_free( RETVAL );
 
 SV*
-to_bin(Crypt::OpenSSL::Bignum self)
+BN_to_bin(Crypt::OpenSSL::Bignum self)
   PREINIT:
     unsigned char* bin;
     int length;
@@ -151,37 +199,42 @@ to_bin(Crypt::OpenSSL::Bignum self)
 unsigned long
 BN_get_word(Crypt::OpenSSL::Bignum self)
 
-SV*
-add(a, b, ...)
-    Crypt::OpenSSL::Bignum a;
-    Crypt::OpenSSL::Bignum b;
+int
+BN_is_zero(Crypt::OpenSSL::Bignum self)
+
+int
+BN_is_one(Crypt::OpenSSL::Bignum self)
+
+int
+BN_is_odd(Crypt::OpenSSL::Bignum self)
+
+void
+BN_add(Crypt::OpenSSL::Bignum self, Crypt::OpenSSL::Bignum b, ...)
   PREINIT:
     BIGNUM *bn;
   PPCODE:
     if( items > 3 )
       croak( "usage: $bn->add( $bn2[, $target] )" );
     bn = ( items < 3 ) ? BN_new() : sv2bn( ST(2) );
-    checkOpenSslCall( BN_add( bn, a, b ) );
-    ST(0) = ( (items < 3 ) ? proto_obj( bn ) : ST(2) );
+    checkOpenSslCall( BN_add( bn, self, b ) );
+    ST(0) = ( (items < 3 ) ? new_obj( bn ) : ST(2) );
     XSRETURN(1);
 
-SV*
-sub(a, b, ...)
-    Crypt::OpenSSL::Bignum a;
-    Crypt::OpenSSL::Bignum b;
+void
+BN_sub(Crypt::OpenSSL::Bignum self, Crypt::OpenSSL::Bignum b, ...)
   PREINIT:
     BIGNUM *bn;
   PPCODE:
     if( items > 3 )
       croak( "usage: $bn->sub( $bn2[, $target] )" );
     bn = ( items < 3 ) ? BN_new() : sv2bn( ST(2) );
-    checkOpenSslCall( BN_sub( bn, a, b ) );
-    ST(0) = ( (items < 3 ) ? proto_obj( bn ) : ST(2) );
+    checkOpenSslCall( BN_sub( bn, self, b ) );
+    ST(0) = ( (items < 3 ) ? new_obj( bn ) : ST(2) );
     XSRETURN(1);
 
-SV*
-mul(a, b, ctx, ...)
-    Crypt::OpenSSL::Bignum a;
+void
+BN_mul(self, b, ctx, ...)
+    Crypt::OpenSSL::Bignum self;
     Crypt::OpenSSL::Bignum b;
     Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
@@ -190,13 +243,13 @@ mul(a, b, ctx, ...)
     if( items > 4 )
       croak( "usage: $bn->mul( $bn2, $ctx, [, $target] )" );
     bn = ( items < 4 ) ? BN_new() : sv2bn( ST(3) );
-    checkOpenSslCall( BN_mul( bn, a, b, ctx ) );
-    ST(0) = ( (items < 4 ) ? proto_obj( bn ) : ST(3) );
+    checkOpenSslCall( BN_mul( bn, self, b, ctx ) );
+    ST(0) = ( (items < 4 ) ? new_obj( bn ) : ST(3) );
     XSRETURN(1);
 
-SV*
-div(a, b, ctx, ...)
-    Crypt::OpenSSL::Bignum a;
+void
+BN_div(self, b, ctx, ...)
+    Crypt::OpenSSL::Bignum self;
     Crypt::OpenSSL::Bignum b;
     Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
@@ -204,160 +257,167 @@ div(a, b, ctx, ...)
     BIGNUM* remainder;
   PPCODE:
     if( items > 5 )
-      croak( "usage: $bn->add( $bn2, $ctx, [, $quotient [, $remainder ] ] )" );
+      croak( "usage: $bn->div( $bn2, $ctx, [, $quotient [, $remainder ] ] )" );
     quotient = ( items < 4 ) ? BN_new() : sv2bn( ST(3) );
     remainder = ( items < 5 ) ? BN_new() : sv2bn( ST(4) );
-    checkOpenSslCall( BN_div( quotient, remainder, a, b, ctx ) );
-    ST(0) = ( (items < 4 ) ? proto_obj( quotient ) : ST(3) );
-    ST(1) = ( (items < 5 ) ? proto_obj( remainder ) : ST(4) );
+    checkOpenSslCall( BN_div( quotient, remainder, self, b, ctx ) );
+    ST(0) = ( (items < 4 ) ? new_obj( quotient ) : ST(3) );
+    ST(1) = ( (items < 5 ) ? new_obj( remainder ) : ST(4) );
     XSRETURN(2);
 
 Crypt::OpenSSL::Bignum
-sqr(a, ctx)
-    Crypt::OpenSSL::Bignum a;
-    Crypt::OpenSSL::Bignum::CTX ctx;
+BN_sqr(Crypt::OpenSSL::Bignum self, Crypt::OpenSSL::Bignum::CTX ctx)
   PREINIT:
     BIGNUM* bn;
-    SV* p_proto;
   CODE:
-    p_proto = ST(0);
-    bn = BN_new();
-    checkOpenSslCall( BN_sqr( bn, a, ctx ) );
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_sqr( bn, self, ctx ) );
     RETVAL = bn;
   OUTPUT:
     RETVAL
 
-SV*
-mod(a, b, ctx, ...)
-    Crypt::OpenSSL::Bignum a;
+void
+BN_mod(self, b, ctx, ...)
+    Crypt::OpenSSL::Bignum self;
     Crypt::OpenSSL::Bignum b;
     Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
   PPCODE:
     if( items > 4 )
-      croak( "usage: $bn->add( $bn2, $ctx, [, $target] )" );
+      croak( "usage: $bn->mod( $bn2, $ctx, [, $target] )" );
     bn = ( items < 4 ) ? BN_new() : sv2bn( ST(3) );
-    checkOpenSslCall( BN_mod( bn, a, b, ctx ) );
-    ST(0) = ( (items < 4 ) ? proto_obj( bn ) : ST(3) );
+    checkOpenSslCall( BN_mod( bn, self, b, ctx ) );
+    ST(0) = ( (items < 4 ) ? new_obj( bn ) : ST(3) );
     XSRETURN(1);
 
 Crypt::OpenSSL::Bignum
-mod_mul(a, b, m, ctx)
-    Crypt::OpenSSL::Bignum a;
+BN_mod_mul(self, b, m, ctx)
+    Crypt::OpenSSL::Bignum self;
     Crypt::OpenSSL::Bignum b;
     Crypt::OpenSSL::Bignum m;
     Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
-    SV* p_proto;
   CODE:
-    p_proto = ST(0);
-    bn = BN_new();
-    checkOpenSslCall( BN_mod_mul( bn, a, b, m, ctx ) );
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_mod_mul( bn, self, b, m, ctx ) );
     RETVAL = bn;
   OUTPUT:
     RETVAL
 
 Crypt::OpenSSL::Bignum
-exp(a, p, ctx)
-    Crypt::OpenSSL::Bignum a;
-    Crypt::OpenSSL::Bignum p;
+BN_exp(self, exp, ctx)
+    Crypt::OpenSSL::Bignum self;
+    Crypt::OpenSSL::Bignum exp;
     Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
-    SV* p_proto;
   CODE:
-    p_proto = ST(0);
-    bn = BN_new();
-    checkOpenSslCall( BN_exp( bn, a, p, ctx ) );
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_exp( bn, self, exp, ctx ) );
     RETVAL = bn;
   OUTPUT:
     RETVAL
 
 Crypt::OpenSSL::Bignum
-mod_exp(a, p, m, ctx)
-    Crypt::OpenSSL::Bignum a;
-    Crypt::OpenSSL::Bignum p;
-    Crypt::OpenSSL::Bignum m;
+BN_mod_exp(self, exp, mod, ctx)
+    Crypt::OpenSSL::Bignum self;
+    Crypt::OpenSSL::Bignum exp;
+    Crypt::OpenSSL::Bignum mod;
     Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
-    SV* p_proto;
   CODE:
-    p_proto = ST(0);
-    bn = BN_new();
-    checkOpenSslCall( BN_mod_exp( bn, a, p, m, ctx ) );
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_mod_exp( bn, self, exp, mod, ctx ) );
     RETVAL = bn;
   OUTPUT:
     RETVAL
 
 Crypt::OpenSSL::Bignum
-mod_inverse(a, n, ctx)
-    Crypt::OpenSSL::Bignum a;
+BN_mod_inverse(self, n, ctx)
+    Crypt::OpenSSL::Bignum self;
     Crypt::OpenSSL::Bignum n;
     Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
-    SV* p_proto;
   CODE:
-    p_proto = ST(0);
-    bn = BN_new();
-    checkOpenSslCall( BN_mod_inverse( bn, a, n, ctx ) );
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_mod_inverse( bn, self, n, ctx ) );
     RETVAL = bn;
   OUTPUT:
     RETVAL
 
 Crypt::OpenSSL::Bignum
-gcd(a, b, ctx)
-    Crypt::OpenSSL::Bignum a;
+BN_gcd(self, b, ctx)
+    Crypt::OpenSSL::Bignum self;
     Crypt::OpenSSL::Bignum b;
     Crypt::OpenSSL::Bignum::CTX ctx;
   PREINIT:
     BIGNUM* bn;
-    SV* p_proto;
   CODE:
-    p_proto = ST(0);
-    bn = BN_new();
-    checkOpenSslCall( BN_gcd( bn, a, b, ctx ) );
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_gcd( bn, self, b, ctx ) );
     RETVAL = bn;
   OUTPUT:
     RETVAL
 
 int
-BN_cmp(a, b)
-    Crypt::OpenSSL::Bignum a;
-    Crypt::OpenSSL::Bignum b;
+BN_equals(Crypt::OpenSSL::Bignum self, Crypt::OpenSSL::Bignum b)
+  CODE:
+    RETVAL = BN_cmp(self, b) == 0 ? 1 : 0;
+  OUTPUT:
+    RETVAL
 
 int
-BN_is_zero(a)
-    Crypt::OpenSSL::Bignum a;
+BN_cmp(Crypt::OpenSSL::Bignum self, Crypt::OpenSSL::Bignum b)
 
 int
-BN_is_one(a)
-    Crypt::OpenSSL::Bignum a;
+BN_num_bits(Crypt::OpenSSL::Bignum self)
 
 int
-BN_is_odd(a)
-    Crypt::OpenSSL::Bignum a;
+BN_num_bytes(Crypt::OpenSSL::Bignum self)
 
 Crypt::OpenSSL::Bignum
-copy(a)
-    Crypt::OpenSSL::Bignum a;
+BN_rshift(Crypt::OpenSSL::Bignum self, int n)
   PREINIT:
-    SV* p_proto;
+    BIGNUM* bn;
   CODE:
-    p_proto = ST(0);
-    checkOpenSslCall( RETVAL = BN_dup(a) );
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_rshift( bn, self, n ) );
+    RETVAL = bn;
+  OUTPUT:
+    RETVAL
+
+Crypt::OpenSSL::Bignum
+BN_lshift(Crypt::OpenSSL::Bignum self, int n)
+  PREINIT:
+    BIGNUM* bn;
+  CODE:
+    checkOpenSslCall( bn = BN_new() );
+    checkOpenSslCall( BN_lshift( bn, self, n ) );
+    RETVAL = bn;
+  OUTPUT:
+    RETVAL
+
+int
+BN_ucmp(Crypt::OpenSSL::Bignum self, Crypt::OpenSSL::Bignum b)
+
+void
+BN_swap(Crypt::OpenSSL::Bignum self, Crypt::OpenSSL::Bignum b)
+    
+Crypt::OpenSSL::Bignum
+BN_copy(Crypt::OpenSSL::Bignum self)
+  CODE:
+    checkOpenSslCall( RETVAL = BN_dup(self) );
   OUTPUT:
     RETVAL
 
 IV
-pointer_copy(a)
-    Crypt::OpenSSL::Bignum a;
-  PREINIT:
+BN_pointer_copy(Crypt::OpenSSL::Bignum self)
   CODE:
-    checkOpenSslCall( RETVAL = PTR2IV(BN_dup(a)) );
+    checkOpenSslCall( RETVAL = PTR2IV(BN_dup(self)) );
   OUTPUT:
     RETVAL
 

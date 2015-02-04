@@ -6,7 +6,7 @@
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 use Test;
-BEGIN { plan tests => 52 };
+BEGIN { plan tests => 67 };
 use Crypt::OpenSSL::Bignum;
 use Crypt::OpenSSL::Bignum::CTX;
 
@@ -124,3 +124,30 @@ ok( 729 == $bn3->exp( $bn6, $ctx )->get_word() );
 ok( 4 == $bn3->mod_exp( $bn6, $bn25, $ctx )->get_word() );
 ok( 36 == $bn6->sqr( $ctx )->get_word() );
 ok( 12 == $bn23->mod_inverse( $bn25, $ctx )->get_word() );
+
+ok(Crypt::OpenSSL::Bignum->new()->get_word == 0);
+ok(Crypt::OpenSSL::Bignum->rand(32, 0, 0));
+ok(Crypt::OpenSSL::Bignum->pseudo_rand(32, 0, 0));
+my $range = Crypt::OpenSSL::Bignum->new_from_decimal('1000');
+ok(Crypt::OpenSSL::Bignum->rand_range($range));
+
+my $d1010 = Crypt::OpenSSL::Bignum->new_from_decimal('1020');
+my $w1010 = Crypt::OpenSSL::Bignum->new_from_word(1020);
+ok($w1010->equals($d1010));
+ok($d1010->num_bits() == 10);
+ok($d1010->num_bytes() == 2);
+ok($d1010->rshift(2)->get_word == 1020/4);
+ok($d1010->lshift(2)->get_word == 1020*4);
+
+my $n1 = Crypt::OpenSSL::Bignum->new_from_decimal('-250');
+my $n2 = Crypt::OpenSSL::Bignum->new_from_decimal('250');
+ok($n1->cmp($n2) == -1);
+ok($n1->ucmp($n2) == 0);
+
+my $one  = Crypt::OpenSSL::Bignum->one;
+my $zero = Crypt::OpenSSL::Bignum->zero;
+ok($one->to_decimal  eq "1");
+ok($zero->to_decimal eq "0");
+$one->swap($zero);
+ok($one->to_decimal  eq "0");
+ok($zero->to_decimal eq "1");
