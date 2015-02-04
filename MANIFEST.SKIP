@@ -32,9 +32,9 @@ pm_to_blib
 ^MYMETA\.
 
 # Avoid archives of this distribution
-\bCrypt-OpenSSL-DSA-[\d\.\_]+
+\bCrypt-OpenSSL-Bignum-[\d\.\_]+
 
-BigNum.c
+Bignum.c
 
 ^MYMETA\.json$
 ^MYMETA\.yml$
