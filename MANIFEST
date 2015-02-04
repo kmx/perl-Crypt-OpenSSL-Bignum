@@ -2,10 +2,11 @@ Bignum.pm
 Bignum.xs
 Bignum/CTX.pm
 Changes
-Makefile.PL
+hints/MSWin32.pl
 LICENSE
+Makefile.PL
 MANIFEST
+META.yml			Module meta-data (added by MakeMaker)
 README
 test.pl
 typemap
-META.yml                                 Module meta-data (added by MakeMaker)
