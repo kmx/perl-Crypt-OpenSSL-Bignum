@@ -10,7 +10,7 @@
 
 SV* new_obj( SV * p_proto, void* obj )
 {
-    return sv_2mortal( sv_bless( newRV_noinc( newSViv( (IV)obj ) ),
+    return sv_2mortal( sv_bless( newRV_noinc( newSViv( PTR2IV(obj) ) ),
                                  ( SvROK( p_proto )
                                    ? SvSTASH( SvRV( p_proto ) )
                                    : gv_stashsv( p_proto, 1 ) ) ) );
@@ -24,7 +24,7 @@ BIGNUM* sv2bn( SV* sv )
     {
       croak( "argument is not a Crypt::OpenSSL::Bignum object" );
     }
-    return (BIGNUM*) SvIV( SvRV( sv ) );
+    return INT2PTR(BIGNUM *, SvIV(SvRV(sv)));
 }
 
 MODULE = Crypt::OpenSSL::Bignum      PACKAGE = Crypt::OpenSSL::Bignum   PREFIX=BN_
@@ -366,7 +366,7 @@ pointer_copy(a)
     BIGNUM* a;
   PREINIT:
   CODE:
-    checkOpenSslCall( RETVAL = (IV) BN_dup(a) );
+    checkOpenSslCall( RETVAL = PTR2IV(BN_dup(a)) );
   OUTPUT:
     RETVAL
 
