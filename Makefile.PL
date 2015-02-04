@@ -11,4 +11,11 @@ WriteMakefile(
     'DEFINE'	=> '-DPERL5 -DOPENSSL_NO_KRB5',
     # perl-5.8/gcc-3.2 needs -DPERL5, and redhat9 likes -DOPENSSL_NO_KRB5
     'INC'               => '',
+    'MIN_PERL_VERSION'  => '5.006002',
+    'META_MERGE'        => {
+      resources => {
+        repository => 'https://github.com/kmx/perl-Crypt-OpenSSL-Bignum',
+      },
+    },
+    dist => { TARFLAGS => '--owner=0 --group=0 -cvf' }, 
 );

@@ -2,12 +2,10 @@ Revision history for Perl extension Crypt::OpenSSL::Bignum.
 
 0.05    2015/05/04
         - fix for #84369 Win32 compatibility patch
-        XXX-TODO:
         - fix for #100993 Memory not reclaimed when CTX object goes out of scope
         - fix for #86561 typo fixes
         - fix for #82959 Error in synopsis: Crypt::OpenSSL::Bignum->new_from_hex("0x3e8") returns "0"
         - fix for #81537 to_bin method returns garbage when value is zero
-        - fix for #77911 Patch to add more functions
 
 0.04    2007/05/20
         - Add a LICENSE file.
