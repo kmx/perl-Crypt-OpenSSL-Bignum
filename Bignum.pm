@@ -371,19 +371,19 @@ Returns the size of binary represenatation in bytes.
  my $new_bn_object = $self->rshift($n);
  # new object is created $self is not modified
 
-Shifts a right by C$n> (integer) bits and places the result into a newly created Crypt::OpenSSL::Bignum object.
+Shifts a right by C<$n> (integer) bits and places the result into a newly created Crypt::OpenSSL::Bignum object.
 
 =item lshift
 
  my $new_bn_object = $self->lshift($n);
  # new object is created $self is not modified
 
-Shifts a left by C$n> (integer) bits and places the result into a newly created Crypt::OpenSSL::Bignum object.
+Shifts a left by C<$n> (integer) bits and places the result into a newly created Crypt::OpenSSL::Bignum object.
 
 =item swap
 
- my $bn_a = Crypt::OpenSSL::Bignum->new_from_decimal("1234567890001);
- my $bn_b = Crypt::OpenSSL::Bignum->new_from_decimal("1234567890002);
+ my $bn_a = Crypt::OpenSSL::Bignum->new_from_decimal("1234567890001");
+ my $bn_b = Crypt::OpenSSL::Bignum->new_from_decimal("1234567890002");
 
  $bn_a->swap($bn_b);
  # or
@@ -399,8 +399,7 @@ Returns a copy of this object.
 
 =item pointer_copy
 
- my $new_bn_object = $self->pointer_copy($BIGNUM_ptr);
- # now you ca free $BIGNUM_ptr
+ my $cloned_BIGNUM_ptr = $self->pointer_copy($BIGNUM_ptr);
 
 This method is intended only for use by XSUB writers wanting to have
 access to the underlying BIGNUM structure referenced by a
