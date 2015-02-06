@@ -10,7 +10,7 @@ require DynaLoader;
 
 @ISA = qw(DynaLoader);
 
-$VERSION = '0.05_01';
+$VERSION = '0.06';
 
 bootstrap Crypt::OpenSSL::Bignum $VERSION;
 
