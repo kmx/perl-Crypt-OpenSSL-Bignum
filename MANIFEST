@@ -2,7 +2,6 @@ Bignum.pm
 Bignum.xs
 Bignum/CTX.pm
 Changes
-hints/MSWin32.pl
 LICENSE
 Makefile.PL
 MANIFEST
