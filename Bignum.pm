@@ -6,9 +6,7 @@ use Carp;
 
 use vars qw( $VERSION @ISA );
 
-require DynaLoader;
-
-@ISA = qw(DynaLoader);
+use base qw(DynaLoader);
 
 $VERSION = '0.07';
 
