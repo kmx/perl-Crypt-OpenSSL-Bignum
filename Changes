@@ -1,6 +1,9 @@
 Revision history for Perl extension Crypt::OpenSSL::Bignum.
 
-0.07    2016/1025
+0.08    2017/02/08
+        - Makefile.PL MSWin32 fix
+
+0.07    2016/10/25
         - Makefile.PL supports OPENSSL_PREFIX or OPENSSL_LIB+OPENSSL_INCLUDE env variables
         - Makefile.PL tries to find libcrypto via pkg-config
 

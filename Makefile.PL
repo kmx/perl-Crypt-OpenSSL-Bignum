@@ -1,4 +1,5 @@
 use ExtUtils::MakeMaker;
+use Config;
 
 my $lib = '-lcrypto';
 my $inc = '';
@@ -16,8 +17,8 @@ elsif (`pkg-config --modversion libcrypto 2>$nul`) {
   $inc = `pkg-config --cflags libcrypto 2> $nul`;
 }
 elsif ($^O eq 'MSWin32') {
-  $lib = ['-llibeay32'] if $Config{cc} =~ /cl/;
-  $lib = ['-leay32']    if $Config{cc} =~ /gcc/;
+  $lib = '-llibeay32' if $Config{cc} =~ /cl/;
+  $lib = '-leay32'    if $Config{cc} =~ /gcc/;
 }
 
 WriteMakefile(
