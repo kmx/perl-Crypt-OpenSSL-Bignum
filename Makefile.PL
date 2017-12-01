@@ -21,6 +21,9 @@ elsif ($^O eq 'MSWin32') {
   $lib = '-leay32'    if $Config{cc} =~ /gcc/;
 }
 
+$lib =~ s/[\r\n]+/ /g;
+$inc =~ s/[\r\n]+/ /g;
+
 WriteMakefile(
     'NAME'              => 'Crypt::OpenSSL::Bignum',
     'VERSION_FROM'      => 'Bignum.pm',
